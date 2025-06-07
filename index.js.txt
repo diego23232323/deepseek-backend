@@ -1,0 +1,35 @@
+import express from "express";
+import fetch from "node-fetch";
+import cors from "cors";
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY; // Use variável de ambiente
+
+app.post("/deepseek", async (req, res) => {
+  try {
+    const { prompt } = req.body;
+    const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        messages: [
+          { role: "system", content: "Você é um assistente de pesquisa que responde de forma objetiva e clara." },
+          { role: "user", content: prompt }
+        ]
+      })
+    });
+    const data = await response.json();
+    res.json({ content: data.choices[0].message.content });
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao consultar DeepSeek" });
+  }
+});
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log("Proxy DeepSeek rodando na porta", PORT));
